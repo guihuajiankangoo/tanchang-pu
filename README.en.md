@@ -42,6 +42,10 @@ A sheet is a plain-text `.txt` file. The first lines set the title, key, tempo, 
 
 Your sheets are saved in the browser automatically, and Save as stores a copy as a `.txt` file.
 
+The recording below shows one bar being written: with the header lines already in place, the chord, notation, lyrics, and strum pattern are typed in turn, and the sheet on the right updates along the way.
+
+![Writing one bar](docs/write.gif)
+
 ### Ukulele
 
 The text in the editor is on the left and the resulting sheet is on the right; boxes of the same color correspond to each other.

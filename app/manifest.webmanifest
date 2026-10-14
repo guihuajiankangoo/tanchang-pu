@@ -1,0 +1,17 @@
+{
+  "name": "弹唱谱",
+  "short_name": "弹唱谱",
+  "description": "尤克里里 / 吉他弹唱谱：和弦图 + 四线谱 / 六线谱 + 简谱 + 歌词，可播放、光标跟随、在线写谱",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f1ec",
+  "theme_color": "#e8590c",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "app/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "app/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "app/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

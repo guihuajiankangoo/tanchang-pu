@@ -1,0 +1,15 @@
+# 生成的 App 版（node tools/build_app.js dist）
+dist/
+*.part
+node_modules/
+# 本机文件
+.vs/
+.vscode/
+Thumbs.db
+desktop.ini
+.DS_Store
+# 永远不要提交
+.tanchang-release
+_private/
+原曲/
+*.pdf

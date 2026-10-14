@@ -181,4 +181,6 @@ The example sheets include only public-domain works. Please do not submit copyri
 
 The author keeps a description of this project's distinguishing features; its SHA-256 is `6ef3da471f53c1cb931ac27a046d6768b1f12636eb36d343d1fa64bb3ed62ed9`.
 
+The code and documentation were developed with the assistance of [Claude](https://claude.ai) by Anthropic.
+
 Third-party components: [alphaTab](https://alphatab.net) handles parsing and playback under the MPL-2.0 license; the Bravura font is licensed under OFL-1.1; the sonivox sound font is licensed under Apache-2.0. See [NOTICE](NOTICE).

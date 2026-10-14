@@ -179,4 +179,6 @@ python tools/serve.py 8790 dist   # 启动本地服务，然后在浏览器打�
 
 作者留存了一份本项目的特征说明，SHA-256：`6ef3da471f53c1cb931ac27a046d6768b1f12636eb36d343d1fa64bb3ed62ed9`
 
+本项目的代码和文档在 Anthropic 的 [Claude](https://claude.ai) 协助下完成。
+
 第三方组件：[alphaTab](https://alphatab.net) 负责解析和播放，采用 MPL-2.0 许可；Bravura 字体采用 OFL-1.1 许可；sonivox 音色库采用 Apache-2.0 许可。详见 [NOTICE](NOTICE)。

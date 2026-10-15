@@ -6,6 +6,8 @@
 
 Scores are written in a concise plain-text format and rendered in the standard Chinese strum-and-sing layout, including chord diagrams, tablature, numbered notation, and lyrics, with accompaniment and melody playback synchronized to the score.
 
+**Try it online:** https://guihuajiankangoo.github.io/tanchang-pu/
+
 ![The player showing the folk song "Songbie"](docs/demo.gif)
 
 The interface and the built-in tutorials are currently in Chinese.
@@ -158,7 +160,12 @@ Common chords need no definition. The ukulele has C, D, E, F, G, A, Am, Dm, Em, 
 
 ## Try it online
 
-Link to be added after launch.
+Address: https://guihuajiankangoo.github.io/tanchang-pu/
+
+- The address is permanent, and the site is updated automatically whenever the repository changes.
+- The site is hosted on GitHub Pages, whose servers are outside mainland China, so it may load slowly on some networks there.
+- After the first visit, the page and sound font are cached locally and work without a network connection.
+- On a phone or tablet, use the browser's Add to Home Screen to install it as an app.
 
 ## Run it locally
 

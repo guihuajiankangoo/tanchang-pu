@@ -31,15 +31,18 @@ const SRC = path.resolve(__dirname, '..');
 // 输出目录：node tools/build_app.js [目录]，不写就是旁边的 ../ukutab-app
 const OUT = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(SRC, '..', 'ukutab-app');
 const ALPHATAB = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@1.8.4';
+// 每个文件的 SHA-256：下载下来对不上就报错停下，防止下载源被篡改后把有问题的代码打包进去。
+// 升级 alphaTab 版本时要同时更新这里的指纹。
 const VENDOR_FILES = {
-  'vendor/alphatab/alphaTab.min.js': ALPHATAB + '/dist/alphaTab.min.js',
-  'vendor/alphatab/font/Bravura.woff2': ALPHATAB + '/dist/font/Bravura.woff2',
-  'vendor/alphatab/font/Bravura.woff': ALPHATAB + '/dist/font/Bravura.woff',
-  'vendor/alphatab/font/Bravura-OFL.txt': ALPHATAB + '/dist/font/Bravura-OFL.txt',
-  'vendor/alphatab/soundfont/sonivox.sf2': ALPHATAB + '/dist/soundfont/sonivox.sf2',
-  'vendor/alphatab/soundfont/LICENSE': ALPHATAB + '/dist/soundfont/LICENSE',
-  'vendor/alphatab/LICENSE': ALPHATAB + '/LICENSE',
+  'vendor/alphatab/alphaTab.min.js': [ALPHATAB + '/dist/alphaTab.min.js', '2d0335501b875453d52359de23cd9cebfcf71aed3d5739f1cf95117acfd52bec'],
+  'vendor/alphatab/font/Bravura.woff2': [ALPHATAB + '/dist/font/Bravura.woff2', '181e0e7c4889f9ad57dde0a11988fa61b941617aa499ecdb9dfd4713896c2b19'],
+  'vendor/alphatab/font/Bravura.woff': [ALPHATAB + '/dist/font/Bravura.woff', '22a46a8480b8eecaa43ece95ec63b45599c8ef6d1ab24f0621834a8be01d4dd9'],
+  'vendor/alphatab/font/Bravura-OFL.txt': [ALPHATAB + '/dist/font/Bravura-OFL.txt', 'c24929be7028026a65ee8894da1e3c36d2a4ccce0548d9ba8ba64509f46319ee'],
+  'vendor/alphatab/soundfont/sonivox.sf2': [ALPHATAB + '/dist/soundfont/sonivox.sf2', '4978cf37e7164206f2d22dc4fdf4020ffe040787210bf781e31bdc79961f59ef'],
+  'vendor/alphatab/soundfont/LICENSE': [ALPHATAB + '/dist/soundfont/LICENSE', '57d801cd718614be838c71f35cf3dcbf5c011fa20130c194a447483dfa2771c5'],
+  'vendor/alphatab/LICENSE': [ALPHATAB + '/LICENSE', 'de981130586154b6ce2cf91528b9291789192d62234d0d7e6e41d085b8e1d351'],
 };
+const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 
 function download(url, dest) {
   return new Promise((resolve, reject) => {
@@ -82,19 +85,35 @@ function replaceOnce(text, from, to, what) {
   //    输出目录会被清空，所以不能是源码目录本身或它的上级，也不能是一个不是由本脚本生成的非空目录
   const rel = path.relative(OUT, SRC);
   if (!rel || !rel.startsWith('..')) throw new Error('输出目录不能是源码目录或它的上级：' + OUT);
-  if (fs.existsSync(OUT) && fs.readdirSync(OUT).length && !fs.existsSync(path.join(OUT, 'sw.js'))) {
+  const MARK = '.app-build'; // 标记文件：说明这个目录是本脚本的输出（上次构建中途失败、还没有 sw.js 时也认得出来）
+  if (fs.existsSync(OUT) && fs.readdirSync(OUT).length && !fs.existsSync(path.join(OUT, 'sw.js')) && !fs.existsSync(path.join(OUT, MARK))) {
     throw new Error('输出目录不是空的，也不像是上次生成的 App 版（没有 sw.js），为安全起见不清空：' + OUT);
   }
   fs.mkdirSync(OUT, { recursive: true });
   for (const name of fs.readdirSync(OUT)) {
-    if (name !== 'vendor') fs.rmSync(path.join(OUT, name), { recursive: true, force: true });
+    if (name !== 'vendor' && name !== MARK) fs.rmSync(path.join(OUT, name), { recursive: true, force: true });
   }
-  for (const [rel, url] of Object.entries(VENDOR_FILES)) {
+  fs.writeFileSync(path.join(OUT, MARK), '本目录由 tools/build_app.js 生成，每次构建会被清空重建\n');
+  for (const [rel, [url, hash]] of Object.entries(VENDOR_FILES)) {
     const dest = path.join(OUT, rel);
-    if (fs.existsSync(dest)) continue;
+    if (fs.existsSync(dest) && sha256(dest) === hash) continue; // 已有且没被改过
     process.stdout.write('下载 ' + rel + ' … ');
-    await download(url, dest);
-    console.log('完成');
+    // 网络抖动（连接被重置、超时）时重试，最多 3 次
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await download(url, dest);
+        break;
+      } catch (e) {
+        if (attempt >= 3) throw e;
+        process.stdout.write('（' + e.message + '，重试）… ');
+        await new Promise((r) => setTimeout(r, 2000 * attempt));
+      }
+    }
+    if (sha256(dest) !== hash) {
+      fs.rmSync(dest, { force: true });
+      throw new Error(rel + ' 的 SHA-256 与预期不符，下载源可能被篡改，已停止构建');
+    }
+    console.log('完成，指纹校验通过');
   }
 
   // 3. 页面和代码
@@ -124,7 +143,7 @@ function replaceOnce(text, from, to, what) {
   fs.writeFileSync(path.join(OUT, 'index.html'), html, 'utf8');
 
   // 4. 离线缓存清单 + 版本号
-  const files = listFiles(OUT).filter((f) => !f.endsWith('.part')).sort();
+  const files = listFiles(OUT).filter((f) => !f.endsWith('.part') && f !== MARK).sort();
   const hash = crypto.createHash('sha1');
   for (const f of files) hash.update(f).update(fs.readFileSync(path.join(OUT, f)));
   const version = hash.digest('hex').slice(0, 10);
